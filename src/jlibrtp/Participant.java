@@ -20,11 +20,16 @@ package jlibrtp;
 
 import java.net.InetSocketAddress;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A participant represents a peer in an RTPSession. Based on the information stored on 
  * these objects, packets are processed and statistics generated for RTCP.
  */
 public class Participant {
+	private static Logger logger = LoggerFactory.getLogger(Participant.class);
+	
 	/** Whether the participant is unexpected, e.g. arrived through unicast with SDES */
 	protected boolean unexpected = false;
 	/** Where to send RTP packets (unicast)*/
@@ -118,17 +123,13 @@ public class Participant {
 	 * @param rtcpPort port on which peer expects RTCP packets. Use 0 if this is a sender-only, or this is a multicast session.
 	 */
 	public Participant(String networkAddress, int rtpPort, int rtcpPort) {
-		if(RTPSession.rtpDebugLevel > 6) {
-			System.out.println("Creating new participant: " + networkAddress);
-		}
-		
 		// RTP
 		if(rtpPort > 0) {
 			try {
 				rtpAddress = new InetSocketAddress(networkAddress, rtpPort);
 			} catch (Exception e) {
-				System.out.println("Couldn't resolve " + networkAddress);
-			}
+				logger.error("Couldn't resolve rtp {}:{}", networkAddress, rtpPort);
+			} 
 			//isReceiver = true;
 		}
 		
@@ -137,10 +138,13 @@ public class Participant {
 			try {
 				rtcpAddress = new InetSocketAddress(networkAddress, rtcpPort);
 			} catch (Exception e) {
-				System.out.println("Couldn't resolve " + networkAddress);
+				logger.error("Couldn't resolve rtcp {}:{}", networkAddress, rtcpPort);
 			}
 		}
 		
+		// first seq number
+		this.firstSeqNumber = firstSeqNumber;
+
 		//By default this is a sender
 		//isSender = true;
 	}
@@ -153,10 +157,6 @@ public class Participant {
 		unexpected = true;
 	}
 	
-	// Dummy constructor to ease testing
-	protected Participant() {
-		System.out.println("Don't use the Participan(void) Constructor!");
-	}
 	
 	/**
 	 * RTP Address registered with this participant.

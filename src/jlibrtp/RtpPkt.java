@@ -18,6 +18,9 @@
  */
 package jlibrtp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * RtpPkt is the basic class for creating and parsing RTP packets.
  * 
@@ -36,6 +39,8 @@ package jlibrtp;
  * @author Arne Kepp
  */
 public class RtpPkt {
+	private static final Logger logger = LoggerFactory.getLogger(RtpPkt.class);
+	
 	/** Whether the packet has been changed since encode() */
 	private boolean rawPktCurrent = false;
 	/** The version, always 2, 2 bits */
@@ -79,12 +84,9 @@ public class RtpPkt {
 		test += setPayloadType(plt);
 		test += setPayload(pl);
 		if(test != 0) {
-			System.out.println("RtpPkt() failed, check with checkPkt()");
+			logger.error("RtpPkt() failed, check with checkPkt()");
 		}
 		rawPktCurrent = true;
-		if( RTPSession.rtpDebugLevel > 5) {
-			System.out.println("<--> RtpPkt(aTimeStamp, syncSource, seqNum, plt, pl)"); 
-		}
 	}
 	/**
 	 * Construct a packet-instance from an raw packet (believed to be RTP). The UDP-headers must be removed before invoking this method. Call checkPkt on the instance to verify that it was successfully parsed.
@@ -93,12 +95,9 @@ public class RtpPkt {
 	 * @param packetSize the number of valid octets in the packet, should be aRawPkt.length
 	 */
 	protected RtpPkt(byte[] aRawPkt, int packetSize){
-		if( RTPSession.rtpDebugLevel > 5) {
-			System.out.println("-> RtpPkt(aRawPkt)"); 
-		}
 		//Check size, need to have at least a complete header
 		if(aRawPkt == null) {
-			System.out.println("RtpPkt(byte[]) Packet null");
+			logger.error("RtpPkt(byte[]) Packet null");
 		}
 		
 		int remOct = packetSize - 12;
@@ -124,15 +123,12 @@ public class RtpPkt {
 				//Mark the buffer as current
 				rawPktCurrent = true;
 			} else {
-				System.out.println("RtpPkt(byte[]) Packet is not version 2, giving up.");
+				logger.warn("RtpPkt(byte[]) Packet is not version 2, giving up.");
 			}
 		} else {
-			System.out.println("RtpPkt(byte[]) Packet too small to be sliced");
+			logger.warn("RtpPkt(byte[]) Packet too small to be sliced");
 		}
 		rawPktCurrent = true;
-		if( RTPSession.rtpDebugLevel > 5) {
-			System.out.println("<- RtpPkt(aRawPkt)");
-		}
 	}
 	
 	/*********************************************************************************************************
@@ -284,7 +280,7 @@ public class RtpPkt {
 			return -1;
 		}
 	}
-	protected byte[] getPayload() {
+	public byte[] getPayload() {
 		return payload;
 	}
 
@@ -366,5 +362,20 @@ public class RtpPkt {
 		int headerLen = getHeaderLength();
 		
 		System.arraycopy(rawPkt, headerLen, payload, 0, bytes);
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append("Rtp[").append(getPayloadType()).append("]");
+		buf.append(" ssrc=").append(getSsrc());
+		buf.append(", t=").append(getTimeStamp());
+		buf.append(", seqNo=").append(getSeqNumber());
+		buf.append(", length=").append(getPayloadLength());
+		
+		if (this.marker > 0) {
+			buf.append(" marker");
+		}
+		return buf.toString();
 	}
 }	

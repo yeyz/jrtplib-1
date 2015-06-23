@@ -34,10 +34,10 @@ public interface RTPAppIntf {
 	 * data from jlibrtp. These calls are synchronous, so you will not
 	 * receive any new packets until this call returns.
 	 * 
-	 * @param frame the frame containing the data
+	 * @param aFrame the frame containing the data
 	 * @param participant the participant from which the data came
 	 */
-	public void receiveData(DataFrame frame, Participant participant);
+	public void receiveData(RtpPkt aFrame, Participant participant);
 	
 	
 	/**
@@ -70,5 +70,5 @@ public interface RTPAppIntf {
 	 * @param payloadType the payload type specified in the RTP packet
 	 * @return the number of packets that make up a frame
 	 */
-	public int frameSize(int payloadType);
+	public int bufferSize(int payloadType);
 }

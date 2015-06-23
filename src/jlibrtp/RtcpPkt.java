@@ -19,12 +19,18 @@
 package jlibrtp;
 
 import java.net.InetAddress;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /** 
  * Common RTCP packet headers.
  *
  * @author Arne Kepp
  */
 public class RtcpPkt {
+	private static final Logger logger = LoggerFactory.getLogger(RtcpPkt.class);
+	
+	
 	/** Whether a problem has been encountered during parsing */
 	protected int problem = 0;
 	/** The version, always 2, 2 bits */
@@ -65,9 +71,9 @@ public class RtcpPkt {
 		}
 		length = StaticProcs.bytesToUIntInt(rawPkt, start+2);
 		
-		if(RTPSession.rtpDebugLevel > 9) {
-			System.out.println(" <-> RtcpPkt.parseHeaders() version:"+version+" padding:"+padding+" itemCount:"+itemCount
-					+" packetType:"+packetType+" length:"+length);
+		if (logger.isDebugEnabled()) {
+		logger.debug(" <-> RtcpPkt.parseHeaders() version:"+version+" padding:"+padding+" itemCount:"+itemCount
+				+" packetType:"+packetType+" length:"+length);
 		}
 		
 		if(packetType > 207 || packetType < 200) 

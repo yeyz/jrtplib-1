@@ -20,6 +20,9 @@ package jlibrtp;
 import java.util.*;
 import java.net.InetSocketAddress;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * Compound RTCP packet class.
  * 
@@ -35,6 +38,8 @@ import java.net.InetSocketAddress;
  */
 
 public class CompRtcpPkt {
+	private static final Logger logger = LoggerFactory.getLogger(CompRtcpPkt.class);
+	
 	/** Problem indicator, negative values denote packet type that cause problem */
 	protected int problem = 0;
 	/** Stores the different subclasses of RtcpPkt that make up the compound packet */

@@ -20,6 +20,9 @@ package jlibrtp;
 
 import java.util.Enumeration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The purpose of this thread is to check whether there are packets ready from 
  * any participants.
@@ -32,6 +35,8 @@ import java.util.Enumeration;
  * @author Arne Kepp
  */
 public class AppCallerThread extends Thread {
+	private static final Logger logger = LoggerFactory.getLogger(AppCallerThread.class);
+	
 	/**  The parent RTP Session */
 	RTPSession rtpSession;
 	/**  The applications interface, where the callback methods are called */
@@ -46,9 +51,7 @@ public class AppCallerThread extends Thread {
 	protected AppCallerThread(RTPSession session, RTPAppIntf rtpApp) {
 		rtpSession = session;
 		appl = rtpApp;
-		if(RTPSession.rtpDebugLevel > 1) {
-			System.out.println("<-> AppCallerThread created");
-		}  
+		logger.info("<-> AppCallerThread created");
 	}
 	
 	/**
@@ -60,17 +63,13 @@ public class AppCallerThread extends Thread {
 	 * frame.
 	 */
 	public void run() {
-		if(RTPSession.rtpDebugLevel > 3) {
-			System.out.println("-> AppCallerThread.run()");
-		}
+		logger.debug("-> AppCallerThread.run()");
 		
 		while(rtpSession.endSession == false) {
 			
 			rtpSession.pktBufLock.lock();
 		    try {
-				if(RTPSession.rtpDebugLevel > 4) {
-					System.out.println("<-> AppCallerThread going to Sleep");
-				}
+				logger.debug("<-> AppCallerThread going to Sleep");
 				
 				try { rtpSession.pktBufDataReady.await(); } 
 					catch (Exception e) { System.out.println("AppCallerThread:" + e.getMessage());}
@@ -86,9 +85,9 @@ public class AppCallerThread extends Thread {
 					//		+ " " + rtpSession.naiveReception + " " + p.pktBuffer);
 					//System.out.println("done: " + done + "  p.unexpected: " + p.unexpected);
 					while(!done && (!p.unexpected || rtpSession.naiveReception) 
-							&& p.pktBuffer != null && p.pktBuffer.length > 0) {
+							&& p.pktBuffer != null && p.pktBuffer.getLength() > 0) {
 
-						DataFrame aFrame = p.pktBuffer.popOldestFrame();
+						RtpPkt aFrame = p.pktBuffer.popOldestFrame();
 						if(aFrame == null) {
 							done = true;
 						} else {
@@ -97,14 +96,14 @@ public class AppCallerThread extends Thread {
 					}
 				}
 		    
-		     } finally {
+		     } catch (Exception e) {
+				logger.error(e.getMessage(), e);
+			 } finally {
 		       rtpSession.pktBufLock.unlock();
 		     }
 			
 		}
-		if(RTPSession.rtpDebugLevel > 3) {
-			System.out.println("<- AppCallerThread.run() terminating");
-		}  
+		logger.debug("<- AppCallerThread.run() terminating");
 	}
 
 }

@@ -270,4 +270,14 @@ public class DataFrame {
 	public int complete() {
 		return this.isComplete;
 	}
+	
+	@Override
+	public String toString() {
+		StringBuilder buf = new StringBuilder();
+		buf.append("RTP[").append(payloadType).append("] ");
+		buf.append("time=").append(this.rtpTimestamp);
+		buf.append(", lastSeqNum=").append(this.lastSeqNum);
+		buf.append("}");
+		return buf.toString();
+	}
 }

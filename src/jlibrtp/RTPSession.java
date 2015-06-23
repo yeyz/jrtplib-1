@@ -27,6 +27,9 @@ import java.util.Iterator;
 import java.util.concurrent.locks.*;
 import java.util.Random;
 import java.util.Enumeration;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 /**
  * The RTPSession object is the core of jlibrtp. 
  * 
@@ -39,13 +42,15 @@ import java.util.Enumeration;
  * @author Arne Kepp
  */
 public class RTPSession {
+	 private static final Logger logger = LoggerFactory.getLogger(RTPSession.class);
+	 
 	 /**
 	  * The debug level is final to avoid compilation of if-statements.</br>
 	  * 0 provides no debugging information, 20 provides everything </br>
 	  * Debug output is written to System.out</br>
 	  * Debug level for RTP related things.
 	  */
-	 final static public int rtpDebugLevel = 0;
+	 final static public int rtpDebugLevel = 11;
 	 /**
 	  * The debug level is final to avoid compilation of if-statements.</br>
 	  * 0 provides no debugging information, 20 provides everything </br>
@@ -53,6 +58,7 @@ public class RTPSession {
 	  * Debug level for RTCP related things.
 	  */
 	 final static public int rtcpDebugLevel = 0;
+	 
 	 
 	 /** RTP unicast socket */
 	 protected DatagramSocket rtpSock = null;
@@ -211,14 +217,12 @@ public class RTPSession {
 	  */
 	 public int RTPSessionRegister(RTPAppIntf rtpApp, RTCPAppIntf rtcpApp, DebugAppIntf debugApp) {
 		if(registered) {
-			System.out.println("RTPSessionRegister(): Can\'t register another application!");
+			logger.error("Can\'t register another application!");
 			return -1;
 		} else {
 			registered = true;
 			generateSeqNum();
-			if(RTPSession.rtpDebugLevel > 0) {
-				System.out.println("-> RTPSessionRegister");
-			}  
+			
 			this.appIntf = rtpApp;
 			this.rtcpAppIntf = rtcpApp;
 			this.debugAppIntf = debugApp;
@@ -280,9 +284,7 @@ public class RTPSession {
 	  * @return	null if there was a problem sending the packets, 2-dim array with {RTP Timestamp, Sequence number}
 	  */
 	 public long[][] sendData(byte[][] buffers, long[] csrcArray, boolean[] markers, long rtpTimestamp, long[] seqNumbers) {
-		 if(RTPSession.rtpDebugLevel > 5) {
-			 System.out.println("-> RTPSession.sendData(byte[])");
-		 }
+		logger.debug("-> RTPSession.sendData(byte[])");
 
 		 // Same RTP timestamp for all
 		 if(rtpTimestamp < 0)
@@ -363,9 +365,8 @@ public class RTPSession {
 					 InetSocketAddress receiver = iter.next().rtpAddress;
 					 DatagramPacket packet = null;
 
-					 if(RTPSession.rtpDebugLevel > 15) {
-						 System.out.println("   Sending to " + receiver.toString());
-					 }
+					 logger.debug("   Sending to {}", receiver);
+					 
 
 					 try {
 						 packet = new DatagramPacket(pktBytes,pktBytes.length,receiver);
@@ -397,9 +398,7 @@ public class RTPSession {
 			 this.sentPktCount++;
 			 this.sentOctetCount++;
 
-			 if(RTPSession.rtpDebugLevel > 5) {
-				 System.out.println("<- RTPSession.sendData(byte[]) " + pkt.getSeqNumber());
-			 }  
+			 logger.info("<- RTPSession.sendData(byte[])", pkt.getSeqNumber());
 		 }
 
 		 return ret;

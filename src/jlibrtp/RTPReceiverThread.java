@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * The RTP receiver thread waits on the designated UDP socket for new packets.
  * 
@@ -33,32 +36,27 @@ import java.net.InetSocketAddress;
  * @author Arne Kepp
  */
 public class RTPReceiverThread extends Thread {
+	private static final Logger logger = LoggerFactory.getLogger(RTPReceiverThread.class);
+	
 	/** Parent RTP Session */
 	RTPSession rtpSession = null;
 
 	RTPReceiverThread(RTPSession session) {
 		rtpSession = session;
-		if(RTPSession.rtpDebugLevel > 1) {
-			System.out.println("<-> RTPReceiverThread created");
-		} 
 	}
 
 	public void run() {
-		if(RTPSession.rtpDebugLevel > 1) {
-			if(rtpSession.mcSession) {
-				System.out.println("-> RTPReceiverThread.run() starting on MC " + rtpSession.rtpMCSock.getLocalPort() );
-			} else {
-				System.out.println("-> RTPReceiverThread.run() starting on " + rtpSession.rtpSock.getLocalPort() );
-			}
+		if(rtpSession.mcSession) {
+			logger.info("-> RTPReceiverThread.run() starting on MC port {}" , rtpSession.rtpMCSock.getLocalPort());
+		} else {
+			logger.info("-> RTPReceiverThread.run() starting on port {}" , rtpSession.rtpSock.getLocalPort());
 		}
 
 		while(!rtpSession.endSession) {
-			if(RTPSession.rtpDebugLevel > 6) {
-				if(rtpSession.mcSession) {
-					System.out.println("-> RTPReceiverThread.run() waiting for MC packet on " + rtpSession.rtpMCSock.getLocalPort() );
-				} else {
-					System.out.println("-> RTPReceiverThread.run() waiting for packet on " + rtpSession.rtpSock.getLocalPort() );
-				}
+			if(rtpSession.mcSession) {
+				logger.debug("-> RTPReceiverThread.run() starting on MC port {}" , rtpSession.rtpMCSock.getLocalPort());
+			} else {
+				logger.debug("-> RTPReceiverThread.run() starting on port {}" , rtpSession.rtpSock.getLocalPort());
 			}
 
 			// Prepare a packet
@@ -71,7 +69,7 @@ public class RTPReceiverThread extends Thread {
 					rtpSession.rtpSock.receive(packet);
 				} catch (IOException e) {
 					if(!rtpSession.endSession) {
-						e.printStackTrace();
+						logger.warn("Exception receive on port {}, {}", rtpSession.rtpSock.getLocalPort(), e);
 					} else {
 						continue;
 					}
@@ -82,7 +80,7 @@ public class RTPReceiverThread extends Thread {
 					rtpSession.rtpMCSock.receive(packet);
 				} catch (IOException e) {
 					if(!rtpSession.endSession) {
-						e.printStackTrace();
+						logger.warn("Exception receive on MC port {}, {}", rtpSession.rtpMCSock.getLocalPort(), e);
 					} else {
 						continue;
 					}
@@ -112,12 +110,8 @@ public class RTPReceiverThread extends Thread {
 				}
 			}
 			
-			if(RTPSession.rtpDebugLevel > 17) {
-				System.out.println("-> RTPReceiverThread.run() rcvd packet, seqNum " + pktSsrc );
-				if(RTPSession.rtpDebugLevel > 10) {
-					String str = new String(pkt.getPayload());
-					System.out.println("-> RTPReceiverThread.run() payload is " + str );
-				}
+			if (logger.isTraceEnabled()) {
+				logger.trace("-> RTPReceiverThread.run() rcvd packet, seqNum {}, payload = {}", pktSsrc, new String(pkt.getPayload()));
 			}
 			
 			//Find the participant in the database based on SSRC
@@ -143,9 +137,9 @@ public class RTPReceiverThread extends Thread {
 					part.pktBuffer = pktBuffer;
 				}
 			} else {
-				System.out.println("RTPReceiverThread: Got an unexpected packet from " + pkt.getSsrc() 
-						+ " the sending ip-address was " + packet.getAddress().toString() 
-						+ ", we expected from " + part.rtpAddress.toString());
+				logger.info("Got an unexpected packet from {}, the sending ip-address was {}, we expected from ",
+								new Object[] { pkt.getSsrc(),
+										packet.getAddress(), part.rtpAddress });
 			}
 
 			// Statistics for receiver report.
@@ -153,9 +147,7 @@ public class RTPReceiverThread extends Thread {
 			// Upate liveness
 			part.lastRtpPkt = System.currentTimeMillis();
 
-			if(RTPSession.rtpDebugLevel > 5) {
-				System.out.println("<-> RTPReceiverThread signalling pktBufDataReady");
-			}
+			logger.debug("<-> RTPReceiverThread signalling pktBufDataReady");
 			
 			// Signal the thread that pushes data to application
 			rtpSession.pktBufLock.lock();
