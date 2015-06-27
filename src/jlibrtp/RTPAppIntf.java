@@ -67,8 +67,12 @@ public interface RTPAppIntf {
 	 * This should be implemented as something fast, such as an
 	 * integer array with the indeces being the payload type.
 	 * 
-	 * @param payloadType the payload type specified in the RTP packet
 	 * @return the number of packets that make up a frame
 	 */
-	public int bufferSize(int payloadType);
+	public int getBufferSize();
+	
+	/**
+	 * @return -1 is UNKNOWN
+	 */
+	public int getFirstSeqNumber();
 }

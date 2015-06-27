@@ -40,12 +40,12 @@ public class UnicastExample implements RTPAppIntf {
 	
 	// RTPAppIntf  All of the following are documented in the JavaDocs
 	/** Used to receive data from the RTP Library. We expect no data */
-	public void receiveData(DataFrame frame, Participant p) {
+	public void receiveData(RtpPkt frame, Participant p) {
 		/** 
 		 * This concatenates all received packets for a single timestamp
 		 * into a single byte[]
 		 */
-		byte[] data = frame.getConcatenatedData();
+		byte[] data = frame.getPayload();
 		
 		/**
 		 * This returns the CNAME, if any, associated with the SSRC
@@ -63,8 +63,12 @@ public class UnicastExample implements RTPAppIntf {
 	}
 	
 	/** How many packets make up a complete frame for the payload type? */
-	public int frameSize(int payloadType) {
+	public int getBufferSize() {
 		return 1;
+	}
+	@Override
+	public int getFirstSeqNumber() {
+		return 0;
 	}
 	// RTPAppIntf/
 	

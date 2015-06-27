@@ -37,18 +37,21 @@ public class CCRTPReceiver implements RTPAppIntf {
 		// Do nothing;
 	}
 	
-	public void receiveData(DataFrame frame, Participant p) {
-		System.out.println("Got data: " + new String(frame.getConcatenatedData()));
+	public void receiveData(RtpPkt frame, Participant p) {
+		System.out.println("Got data: " + new String(frame.getPayload()));
 	}
 	
 	public void userEvent(int type, Participant[] participant) {
 		//Do nothing
 	}
 	
-	public int frameSize(int payloadType) {
+	public int getBufferSize() {
 		return 1;
 	}
-	
+	@Override
+	public int getFirstSeqNumber() {
+		return 0;
+	}
 	/**
 	 * @param args
 	 */

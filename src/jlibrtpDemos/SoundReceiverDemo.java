@@ -33,9 +33,9 @@ public class SoundReceiverDemo implements RTPAppIntf {
 		LEFT, RIGHT, NORMAL
 	};
 
-	public void receiveData(DataFrame frame, Participant p) {
+	public void receiveData(RtpPkt frame, Participant p) {
 		if(auline != null) {
-			byte[] data = frame.getConcatenatedData();
+			byte[] data = frame.getPayload();
 			auline.write(data, 0, data.length);
 			
 			//dataCount += data.length;
@@ -54,10 +54,14 @@ public class SoundReceiverDemo implements RTPAppIntf {
 	public void userEvent(int type, Participant[] participant) {
 		//Do nothing
 	}
-	public int frameSize(int payloadType) {
+	public int getBufferSize() {
 		return 1;
 	}
 	
+	@Override
+	public int getFirstSeqNumber() {
+		return 0;
+	}
 	public SoundReceiverDemo(int rtpPort, int rtcpPort)  {
 		DatagramSocket rtpSocket = null;
 		DatagramSocket rtcpSocket = null;

@@ -29,8 +29,8 @@ public class TestRTPSession implements RTPAppIntf {
 	}
 	
 	
-	public void receiveData(DataFrame frame, Participant p) {
-		String s = new String(frame.getConcatenatedData());
+	public void receiveData(RtpPkt frame, Participant p) {
+		String s = new String(frame.getPayload());
 		System.out.println("The Data has been received: "+s+" , thank you "
 				+p.getCNAME()+"("+p.getSSRC()+")");
 	}
@@ -39,10 +39,13 @@ public class TestRTPSession implements RTPAppIntf {
 		//Do nothing
 	}
 	
-	public int frameSize(int payloadType) {
+	public int getBufferSize() {
 		return 1;
 	}
-	
+	@Override
+	public int getFirstSeqNumber() {
+		return 0;
+	}
 	public static void main(String[] args) {
 		TestRTPSession test = new TestRTPSession();
 		//try { Thread.currentThread().sleep(10000); } catch (Exception e) {  };

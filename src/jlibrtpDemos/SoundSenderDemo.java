@@ -79,7 +79,7 @@ public class SoundSenderDemo implements RTPAppIntf  {
 		System.out.println("pktCount: " + pktCount);
 	}
 	
-	public void receiveData(DataFrame dummy1, Participant dummy2) {
+	public void receiveData(RtpPkt dummy1, Participant dummy2) {
 		// We don't expect any data.
 	}
 	
@@ -87,10 +87,13 @@ public class SoundSenderDemo implements RTPAppIntf  {
 		//Do nothing
 	}
 	
-	public int frameSize(int payloadType) {
+	public int getBufferSize() {
 		return 1;
 	}
-	
+	@Override
+	public int getFirstSeqNumber() {
+		return 0;
+	}
 	public void run() {
 		if(RTPSession.rtpDebugLevel > 1) {
 			System.out.println("-> Run()");
