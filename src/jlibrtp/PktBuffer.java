@@ -115,7 +115,7 @@ public class PktBuffer {
 		if (!success) {
 			jitterBuffer.remove(aPkt);
 			jitterBuffer.add(aPkt);
-			logger.info("Replaced  {} ", aPkt);
+			logger.debug("Replaced  {} ", aPkt);
 		}
 	}
 	
