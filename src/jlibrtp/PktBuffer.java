@@ -107,16 +107,17 @@ public class PktBuffer {
 			return;
 		}
 		
+		// aPkt < except
+		if (isStarted && aPkt.getSeqNumber() < exceptSeqNumber
+				&& exceptSeqNumber - getBufferSize() < aPkt.getSeqNumber()) {
+			logger.debug("ignore {}", aPkt);
+			return;
+		}
+		
 		bufferedAddPkt(aPkt);
 	}
 	
 	private void bufferedAddPkt(RtpPkt aPkt) {
-		// aPkt < except
-		if (isStarted && aPkt.getSeqNumber() < exceptSeqNumber
-				&& exceptSeqNumber - getBufferSize() < aPkt.getSeqNumber()) {
-			logger.info("ignore {}", aPkt);
-			return;
-		}
 		
 		boolean success = jitterBuffer.add(aPkt);
 		if (!success) {
@@ -170,13 +171,9 @@ public class PktBuffer {
 		
 		if (null != pop) {
 			if (exceptSeqNumber != pop.getSeqNumber()) {
-				logger.warn("wait  {}, size = {}", exceptSeqNumber, jitterBuffer.size());
+				logger.debug("maybe rtp lost, wait  {}, size = {}", exceptSeqNumber, jitterBuffer.size());
 			}
 			exceptSeqNumber = (pop.getSeqNumber() + 1) & 0xFFFFFFFF;
-		} else {
-			if (!jitterBuffer.isEmpty()) {
-				logger.info("wait {}, first {}", exceptSeqNumber, jitterBuffer.first().getSeqNumber());
-			}
 		}
 
 		return pop;
