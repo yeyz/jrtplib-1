@@ -142,7 +142,7 @@ public class RtpPkt {
 		//TODO include extension
 		return 12 + 4*getCsrcCount();
 	}
-	protected int getPayloadLength() {
+	public int getPayloadLength() {
 		return payload.length;
 	}
 	//public int getPaddingLength() {
@@ -164,17 +164,17 @@ public class RtpPkt {
 	protected boolean isMarked() {
 		return (marker != 0);
 	}
-	protected int getPayloadType() {
+	public int getPayloadType() {
 		return payloadType;
 	}
 	
-	protected int getSeqNumber() {
+	public int getSeqNumber() {
 		return seqNumber;
 	}
-	protected long getTimeStamp() {
+	public long getTimeStamp() {
 		return timeStamp;
 	}
-	protected long getSsrc() {
+	public long getSsrc() {
 		return ssrc;
 	}
 	
