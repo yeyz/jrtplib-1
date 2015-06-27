@@ -143,8 +143,10 @@ public class PktBuffer {
 		}
 		
 		if (null != pop) {
+			if (exceptSeqNumber != pop.getSeqNumber()) {
+				logger.warn("wait seq number {}, buffer size is {}", exceptSeqNumber, jitterBuffer.size());
+			}
 			exceptSeqNumber = (pop.getSeqNumber() + 1) & 0xFFFFFFFF;
-			logger.debug("pop {}, size = {}", pop.getSeqNumber(), jitterBuffer.size());
 		}
 
 		return pop;
