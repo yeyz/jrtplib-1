@@ -22,6 +22,9 @@ import java.net.DatagramPacket;
 import java.net.InetSocketAddress;
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * This thread sends scheduled RTCP packets 
  * 
@@ -32,6 +35,8 @@ import java.util.*;
  *
  */
 public class RTCPSenderThread extends Thread {
+	private static final Logger logger = LoggerFactory.getLogger(RTCPSenderThread.class);
+	
 	/** Parent RTP Session */
 	private RTPSession rtpSession = null;
 	/** Parent RTCP Session */
@@ -156,15 +161,6 @@ public class RTCPSenderThread extends Thread {
 		}
 		
 		//Send packet
-		if(RTPSession.rtcpDebugLevel > 5) {
-			Iterator<RtcpPkt> iter = pkt.rtcpPkts.iterator();
-			String str = " ";
-			while(iter.hasNext()) {
-				RtcpPkt aPkt = iter.next();
-				str += (aPkt.getClass().toString() + ":"+aPkt.itemCount+ ", ");
-			}
-			System.out.println("<-> RTCPSenderThread.SendCompRtcpPkt() unicast to " + receiver + str);
-		}
 		try {
 			rtcpSession.rtcpSock.send(packet);
 			//Debug
@@ -175,8 +171,7 @@ public class RTCPSenderThread extends Thread {
 								+ this.rtcpSession.rtcpSock.getLocalSocketAddress().toString()));
 			}
 		} catch (Exception e) {
-			System.out.println("RTCPSenderThread.SendCompRtcpPkt() unicast failed.");
-			e.printStackTrace();
+			logger.warn("RTCPSenderThread.SendCompRtcpPkt() unicast failed.", e);
 			return -1;
 		}
 		return packet.getLength();
@@ -338,13 +333,11 @@ public class RTCPSenderThread extends Thread {
 	 * 5) Calculate next delay before going to sleep
 	 */
 	public void run() {
-		if(RTPSession.rtcpDebugLevel > 1) {
-			System.out.println("<-> RTCPSenderThread running");
-		}
+		logger.info("<-> RTCPSenderThread running");
 		
 		// Give the application a chance to register some participants
 		try { Thread.sleep(10); } 
-		catch (Exception e) { System.out.println("RTCPSenderThread didn't get any initial rest."); }
+		catch (Exception e) { logger.warn("RTCPSenderThread didn't get any initial rest."); }
 		
 		// Set up an iterator for the member list
 		Enumeration<Participant> enu = null;
@@ -357,13 +350,11 @@ public class RTCPSenderThread extends Thread {
 			iter = rtpSession.partDb.getUnicastReceivers();
 		}
 		while(! rtpSession.endSession) {
-			if(RTPSession.rtcpDebugLevel > 5) {
-				System.out.println("<-> RTCPSenderThread sleeping for " +rtcpSession.nextDelay+" ms");
-			}
+			logger.info("<-> RTCPSenderThread sleeping for {} ms", rtcpSession.nextDelay);
 			
 			try { Thread.sleep(rtcpSession.nextDelay); } 
 			catch (Exception e) { 
-				System.out.println("RTCPSenderThread Exception message:" + e.getMessage());
+				logger.warn("RTCPSenderThread Exception message:{}", e.getMessage());
 				// Is the party over?
 				if(this.rtpSession.endSession) {
 					continue;
@@ -379,9 +370,7 @@ public class RTCPSenderThread extends Thread {
 			this.rtcpSession.fbAllowEarly = true;
 			
 				
-			if(RTPSession.rtcpDebugLevel > 5) {
-				System.out.println("<-> RTCPSenderThread waking up");
-			}
+			logger.info("<-> RTCPSenderThread waking up");
 			
 			// Regenerate nextDelay, before anything happens.
 			rtcpSession.calculateDelay();

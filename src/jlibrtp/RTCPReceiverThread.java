@@ -24,6 +24,9 @@ import java.net.InetSocketAddress;
 import java.util.Enumeration;
 import java.util.Iterator;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * This thread hangs on the RTCP socket and waits for new packets
  * 
@@ -31,6 +34,8 @@ import java.util.Iterator;
  *
  */
 public class RTCPReceiverThread extends Thread {
+	private static final Logger logger = LoggerFactory.getLogger(RTCPReceiverThread.class);
+	
 	/** Parent RTP Session */
 	private RTPSession rtpSession = null;
 	/** Parent RTCP Session */
@@ -305,22 +310,17 @@ public class RTCPReceiverThread extends Thread {
 	 * 4) block until the next one arrives.
 	 */
 	public void run() {
-		if(RTPSession.rtcpDebugLevel > 1) {
-			if(rtpSession.mcSession) {
-				System.out.println("-> RTCPReceiverThread.run() starting on MC " + rtcpSession.rtcpMCSock.getLocalPort() );
-			} else {
-				System.out.println("-> RTCPReceiverThread.run() starting on " + rtcpSession.rtcpSock.getLocalPort() );
-			}
+		if(rtpSession.mcSession) {
+			logger.warn("-> RTCPReceiverThread.run() starting on MC {}", rtcpSession.rtcpMCSock.getLocalPort() );
+		} else {
+			logger.warn("-> RTCPReceiverThread.run() starting on {}" , rtcpSession.rtcpSock.getLocalPort() );
 		}
 
 		while(!rtpSession.endSession) {
-			
-			if(RTPSession.rtcpDebugLevel > 4) {
-				if(rtpSession.mcSession) {
-					System.out.println("-> RTCPReceiverThread.run() waiting for packet on MC " + rtcpSession.rtcpMCSock.getLocalPort() );
-				} else {
-					System.out.println("-> RTCPReceiverThread.run() waiting for packet on " + rtcpSession.rtcpSock.getLocalPort() );
-				}
+			if(rtpSession.mcSession) {
+				logger.info("-> RTCPReceiverThread.run() starting on MC {}", rtcpSession.rtcpMCSock.getLocalPort() );
+			} else {
+				logger.info("-> RTCPReceiverThread.run() starting on {}" , rtcpSession.rtcpSock.getLocalPort() );
 			}
 
 			// Prepare a packet
@@ -332,9 +332,9 @@ public class RTCPReceiverThread extends Thread {
 				//Unicast
 				try {
 					rtcpSession.rtcpSock.receive(packet);
-				} catch (IOException e) {
+				} catch (Exception e) {
 					if(!rtpSession.endSession) {
-						e.printStackTrace();
+						logger.error(e.getMessage(), e);
 					} else {
 						continue;
 					}
@@ -343,9 +343,9 @@ public class RTCPReceiverThread extends Thread {
 				//Multicast
 				try {
 					rtcpSession.rtcpMCSock.receive(packet);
-				} catch (IOException e) {
+				} catch (Exception e) {
 					if(!rtpSession.endSession) {
-						e.printStackTrace();
+						logger.error(e.getMessage(), e);
 					} else {
 						continue;
 					}
@@ -357,13 +357,12 @@ public class RTCPReceiverThread extends Thread {
 					|| ! packet.getSocketAddress().equals(rtcpSession.rtcpSock) ) {
 				//System.out.println("Packet received from: " + packet.getSocketAddress().toString());
 				parsePacket(packet);
+				logger.debug("Packet received from: {}:{}", packet.getAddress(), packet.getPort());
 				//rtpSession.partDb.debugPrint();
 			}			
 		}
 		
-		if(RTPSession.rtcpDebugLevel > 1) {
-			System.out.println("<-> RTCPReceiverThread terminating");
-		}
+		logger.warn("<-> RTCPReceiverThread terminating");
 	}
 
 }

@@ -18,12 +18,17 @@
  */
 package jlibrtp;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * RTCP packets for Sender Reports 
  * 
  * @author Arne Kepp
  */
 public class RtcpPktSR extends RtcpPkt {
+	private static final Logger logger = LoggerFactory.getLogger(RtcpPktSR.class);
+	
 	/** NTP timestamp, MSB */
 	protected long ntpTs1 = -1; //32 bits
 	/** NTP timestamp, LSB */
@@ -62,16 +67,10 @@ public class RtcpPktSR extends RtcpPkt {
 	 * @param length used to determine number of included receiver reports
 	 */
 	protected RtcpPktSR(byte[] aRawPkt, int start, int length) {
-		if(RTPSession.rtpDebugLevel > 9) {
-				System.out.println("  -> RtcpPktSR(rawPkt)");
-		}
-		
 		super.rawPkt = aRawPkt;
 
 		if(!super.parseHeaders(start) || packetType != 200 ) {
-			if(RTPSession.rtpDebugLevel > 2) {
-				System.out.println(" <-> RtcpPktSR.parseHeaders() etc. problem: "+ (!super.parseHeaders(start) ) + " " + packetType + " " + super.length);
-			}
+			logger.info(" <-> RtcpPktSR.parseHeaders() etc. problem: {} {} ", (!super.parseHeaders(start) ), packetType);
 			super.problem = -200;
 		} else {
 			super.ssrc = StaticProcs.bytesToUIntLong(aRawPkt,4+start);
@@ -91,10 +90,6 @@ public class RtcpPktSR extends RtcpPkt {
 				rReports = new RtcpPktRR(rawPkt,start,itemCount);
 			}
 		}
-		
-		if(RTPSession.rtpDebugLevel > 9) {
-			System.out.println("  <- RtcpPktSR(rawPkt)");
-		}
 	}
 	
 	/**
@@ -105,9 +100,9 @@ public class RtcpPktSR extends RtcpPkt {
 	protected void encode() {		
 		if(RTPSession.rtpDebugLevel > 9) {
 			if(this.rReports != null) {
-				System.out.println("  -> RtcpPktSR.encode() receptionReports.length: " + this.rReports.length );
+				logger.info("  -> RtcpPktSR.encode() receptionReports.length: {}", this.rReports.length );
 			} else {
-				System.out.println("  -> RtcpPktSR.encode() receptionReports: null");
+				logger.info("  -> RtcpPktSR.encode() receptionReports: null");
 			}
 		}
 		
@@ -152,10 +147,7 @@ public class RtcpPktSR extends RtcpPkt {
 		someBytes = StaticProcs.uIntLongToByteWord(sendersOctCount);
 		System.arraycopy(someBytes, 0, super.rawPkt, 24, 4);
 		
-		if(RTPSession.rtpDebugLevel > 9) {
-			System.out.println("  <- RtcpPktSR.encode() ntpTs1: "
-					+ Long.toString(ntpTs1) + " ntpTs2: " + Long.toString(ntpTs2));
-		}
+		logger.info("  <- RtcpPktSR.encode() ntpTs1: {} ntpTs2: {}" ,Long.toString(ntpTs1), Long.toString(ntpTs2));
 	}
 
 	/**
