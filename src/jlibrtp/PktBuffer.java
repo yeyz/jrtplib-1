@@ -70,7 +70,7 @@ public class PktBuffer {
 	/** The parent participant */
 	private Participant p;
 	
-
+	private boolean isStarted = false;
 	private long exceptSeqNumber = -1;
 	private TreeSet<RtpPkt> jitterBuffer = new TreeSet<RtpPkt>(rtpPktComparator);
 	
@@ -111,6 +111,13 @@ public class PktBuffer {
 	}
 	
 	private void bufferedAddPkt(RtpPkt aPkt) {
+		// aPkt < except
+		if (isStarted && aPkt.getSeqNumber() < exceptSeqNumber
+				&& exceptSeqNumber - getBufferSize() < aPkt.getSeqNumber()) {
+			logger.info("ignore {}", aPkt);
+			return;
+		}
+		
 		boolean success = jitterBuffer.add(aPkt);
 		if (!success) {
 			jitterBuffer.remove(aPkt);
@@ -128,28 +135,55 @@ public class PktBuffer {
 	public synchronized RtpPkt popOldestFrame() {
 		int maxBufferSize = 0;
 		if (jitterBuffer.size() > 0) {
-			maxBufferSize = rtpSession.appIntf.bufferSize(jitterBuffer.first().getPayloadType());
+			maxBufferSize = getBufferSize();
 		}
 		
 		if (jitterBuffer.isEmpty()) {
 			return null;
 		}
 		
+		if (!isStarted) {
+			exceptSeqNumber = rtpSession.appIntf.getFirstSeqNumber();
+			if (-1 != exceptSeqNumber) {
+				while(!jitterBuffer.isEmpty() 
+						&& jitterBuffer.first().getSeqNumber() < exceptSeqNumber) {
+					RtpPkt pkt = jitterBuffer.pollFirst();
+					logger.info("ignore {}", pkt);
+				}
+
+				if (!jitterBuffer.isEmpty()) {
+					exceptSeqNumber = jitterBuffer.first().getSeqNumber();
+				}
+				isStarted = true;
+				logger.info("seqNoStart = {}", exceptSeqNumber);
+			}
+		}
+		
 		RtpPkt pop = null;
-		if(jitterBuffer.size() >= maxBufferSize) {
-			pop = jitterBuffer.pollFirst();
-		} else if (exceptSeqNumber == jitterBuffer.first().getSeqNumber()){
+		if (null == pop && exceptSeqNumber == jitterBuffer.first().getSeqNumber()){
 			pop = jitterBuffer.pollFirst();
 		}
 		
+		if(null == pop && jitterBuffer.size() >= maxBufferSize) {
+			pop = jitterBuffer.pollFirst();
+		} 
+		
 		if (null != pop) {
 			if (exceptSeqNumber != pop.getSeqNumber()) {
-				logger.warn("wait seq number {}, buffer size is {}", exceptSeqNumber, jitterBuffer.size());
+				logger.warn("wait  {}, size = {}", exceptSeqNumber, jitterBuffer.size());
 			}
 			exceptSeqNumber = (pop.getSeqNumber() + 1) & 0xFFFFFFFF;
+		} else {
+			if (!jitterBuffer.isEmpty()) {
+				logger.info("wait {}, first {}", exceptSeqNumber, jitterBuffer.first().getSeqNumber());
+			}
 		}
 
 		return pop;
+	}
+
+	private int getBufferSize() {
+		return rtpSession.appIntf.getBufferSize();
 	}
  	/** 
 	 * Returns the length of the packetbuffer.
