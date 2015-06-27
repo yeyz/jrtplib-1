@@ -64,13 +64,14 @@ public class PktBuffer {
 	};
 	
 	/** The RTPSession holds information common to all packetBuffers, such as max size */
-	RTPSession rtpSession;
+	private RTPSession rtpSession;
 	/** SSRC of the the participant that this buffer is for */
-	long SSRC;
+	private long SSRC;
 	/** The parent participant */
-	Participant p;
+	private Participant p;
 	
 
+	private long exceptSeqNumber = -1;
 	private TreeSet<RtpPkt> jitterBuffer = new TreeSet<RtpPkt>(rtpPktComparator);
 	
 	/** 
@@ -130,11 +131,23 @@ public class PktBuffer {
 			maxBufferSize = rtpSession.appIntf.bufferSize(jitterBuffer.first().getPayloadType());
 		}
 		
-		if(jitterBuffer.size() < maxBufferSize) {
+		if (jitterBuffer.isEmpty()) {
 			return null;
-		} else {
-			return jitterBuffer.pollFirst();
 		}
+		
+		RtpPkt pop = null;
+		if(jitterBuffer.size() >= maxBufferSize) {
+			pop = jitterBuffer.pollFirst();
+		} else if (exceptSeqNumber == jitterBuffer.first().getSeqNumber()){
+			pop = jitterBuffer.pollFirst();
+		}
+		
+		if (null != pop) {
+			exceptSeqNumber = (pop.getSeqNumber() + 1) & 0xFFFFFFFF;
+			logger.debug("pop {}, size = {}", pop.getSeqNumber(), jitterBuffer.size());
+		}
+
+		return pop;
 	}
  	/** 
 	 * Returns the length of the packetbuffer.
